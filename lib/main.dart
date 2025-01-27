@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_app/data/db_helper.dart';
+import 'package:todo_app/pages/add_task.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Todo App'),
+      home: const MyHomePage(title: 'Ma liste de tâches'),
     );
   }
 }
@@ -62,7 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final data = await DbHelper.getAllData();
     List<Map<String, dynamic>> datas = [];
     int i = 0;
-    for (var row in data) {
+    for (var row in data.reversed) {
       DateTime date = DateTime.fromMillisecondsSinceEpoch(row['createdAt']);
       datas.insert(i, {
         'id': row['id'],
@@ -109,9 +110,19 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _fetchAllData();
+  }
+
+  Future<void> _navigateToAddOrEditTask() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddTask()),
+    );
+
+    if (result) { // Si une tâche a été ajoutée ou modifiée
+      _fetchAllData(); // Recharger les tâches
+    }
   }
 
   @override
@@ -128,16 +139,6 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: EdgeInsets.all(8),
-              child: TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                    labelText: 'Saisissez la tâche',
-                    border: OutlineInputBorder()),
-              ),
-            ),
-            Text('Liste des tâches'),
             Expanded(
                 child: ListView.builder(
                     itemCount: _todos.length,
@@ -165,7 +166,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _addTask();
+          _navigateToAddOrEditTask();
         },
         tooltip: 'Ajouter des tâches',
         backgroundColor: Colors.blueAccent,
