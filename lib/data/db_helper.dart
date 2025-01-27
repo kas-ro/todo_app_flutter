@@ -12,22 +12,22 @@ class DbHelper {
   }
 
   static Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'todo_app.db');
+    String path = join(await getDatabasesPath(), 'todo_app1.db');
     return await openDatabase(
       path,
       version: 1,
       onCreate: (db, version) {
         return db.execute(
-            'CREATE TABLE todo (id INTEGER PRIMARY KEY, task TEXT, done INTEGER)'
+            'CREATE TABLE todo (id INTEGER PRIMARY KEY, task TEXT, done INTEGER, createdAt INTEGER)'
         );
       },
     );
   }
 
   // INSERT DATA
-  static Future<int> insertData(String task) async {
+  static Future<int> insertData(String task, int date) async {
     final db = await getDatabase();
-    return await db.insert('todo', {'task': task, 'done': 0 });
+    return await db.insert('todo', {'task': task, 'done': 0, 'createdAt': date});
   }
 
   // UPDATE DATA

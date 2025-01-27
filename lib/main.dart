@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:todo_app/data/db_helper.dart';
 
 void main() {
@@ -35,10 +36,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   List<Map<String, dynamic>> _todos = [];
   final _controller = TextEditingController();
+  int _count = 0;
 
   void _addTask() async {
     if (_controller.text.isNotEmpty) {
-      DbHelper.insertData(_controller.text);
+      final DateTime createdAt = DateTime.now();
+      int date = createdAt.millisecondsSinceEpoch;
+      DbHelper.insertData(_controller.text, date);
       _controller.clear();
       _fetchAllData();
     }
@@ -56,9 +60,51 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _fetchAllData() async {
     final data = await DbHelper.getAllData();
+    List<Map<String, dynamic>> datas = [];
+    int i = 0;
+    for (var row in data) {
+      DateTime date = DateTime.fromMillisecondsSinceEpoch(row['createdAt']);
+      datas.insert(i, {
+        'id': row['id'],
+        'task': row['task'],
+        'done': row['done'],
+        'createdAt': date,
+      });
+      i++;
+    }
     setState(() {
-      _todos = data;
+      _todos = datas;
     });
+  }
+
+  void _alertDialog() {
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Incrementation"),
+            content: Text("Etes vous sur de vouloir incrementer"),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("Annuler")
+              ),
+              TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _count++;
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: Text("Confirmer")
+              ),
+            ],
+          );
+        }
+    );
   }
 
   @override
@@ -87,10 +133,11 @@ class _MyHomePageState extends State<MyHomePage> {
               child: TextField(
                 controller: _controller,
                 decoration: InputDecoration(
-                    hintText: 'Saisissez la tâche',
+                    labelText: 'Saisissez la tâche',
                     border: OutlineInputBorder()),
               ),
             ),
+            Text('Liste des tâches'),
             Expanded(
                 child: ListView.builder(
                     itemCount: _todos.length,
@@ -102,7 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             todo['task'],
                             style: TextStyle(decoration:  todo['done'] == 1 ? TextDecoration.lineThrough : TextDecoration.none)
                         ),
-                        subtitle: Text(todo.toString()),
+                        subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(todo['createdAt'])),
                         trailing: Checkbox(
                             value: todo['done'] == 1,
                             onChanged: (value){
@@ -110,7 +157,9 @@ class _MyHomePageState extends State<MyHomePage> {
                             },
                         ),
                       );
-                    }))
+                    },
+                ),
+            ),
           ],
         ),
       ),
